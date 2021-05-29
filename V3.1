@@ -171,87 +171,117 @@ a = 0; %Final number of rows for the water matrix
 b = 0; %Final number columns for copper matrix
 c = 0; %Final number columns for polystyrene matrix
 d = 0; %Final number columns for polyurethane matrix
+
+position = zeros(a); %Used as position for the figures
     
 %Inlet
-for x = [0:delta_x_copper:L_inoutlet]    
+for x = [0:delta_x_copper:L_inoutlet]
     a = a + 1;
     b = b + 1;
+    position(a) = x; %Used to define position matrix for figures
+    final_position = x;
+    %The final position variable is simply used to ensure the last
+    %position is defined in order to carry it into the next for loop
+    %And to help create the position vector
 end
 
+
 %Straight Piece 1 
-for x = [0:delta_x_copper:L_co_straight]
+for x = [final_position:delta_x_copper:final_position+L_co_straight]
     a = a + 1;
     b = b + 1;
+    position(a) = x;
+    final_position = x;
 end
 
 %Bend 1
-for x = [0:delta_x_copper:L_co_bends]    
+for x = [final_position:delta_x_copper:final_position+L_co_bends]
     a = a + 1;
     b = b + 1;
+    position(a) = x;
+    final_position = x;
 end
 
 %Straight Piece 2
-for x = [0:delta_x_copper:L_co_straight]
+for x = [final_position:delta_x_copper:final_position+L_co_straight]   
     a = a + 1;
     b = b + 1;
+    position(a) = x;
+    final_position = x;
 end
 
 %Bend 2
-for x = [0:delta_x_copper:L_co_bends]   
+for x = [final_position:delta_x_copper:final_position+L_co_bends]
     a = a + 1;
-    b = b + 1;  
+    b = b + 1;
+    position(a) = x;
+    final_position = x; 
 end
 
 %Straight Piece 3
-for x = [0:delta_x_copper:L_co_straight]   
+for x = [final_position:delta_x_copper:final_position+L_co_straight]
     a = a + 1;
-    b = b + 1;   
+    b = b + 1;
+    position(a) = x;
+    final_position = x;
 end
 
 %Bend 3
-for x = [0:delta_x_copper:L_co_bends]   
+for x = [final_position:delta_x_copper:final_position+L_co_bends] 
     a = a + 1;
-    b = b + 1;   
+    b = b + 1;
+    position(a) = x;
+    final_position = x;  
 end
 
 %Straight Piece 4
-for x = [0:delta_x_copper:L_co_straight]  
+for x = [final_position:delta_x_copper:final_position+L_co_straight]
     a = a + 1;
-    b = b + 1;   
+    b = b + 1;
+    position(a) = x;
+    final_position = x;
 end
 
 %Oulet
-for x = [0:delta_x_copper:L_inoutlet]   
+for x = [final_position:delta_x_copper:final_position+L_inoutlet]
     a = a + 1;
-    b = b + 1;   
+    b = b + 1;
+    position(a) = x;
+    final_position = x;    
 end
  
-%Connection 1
-for x = [0:delta_x_conn:L_conn1]   
-    a = a + 1;
-    d = d + 1;
-end
- 
-%Storage vessel 
-for x = [0:delta_x_pvc:L_pvc]
-    a = a + 1;
-    c = c + 1;    
-end
-
-%Connection 2 
-for x = [0:delta_x_conn:L_conn2]     
+ %Connection 1
+ for x = [final_position:delta_x_conn:final_position+L_conn1]
      a = a + 1;
      d = d + 1;
-end   
+     position(a) = x;
+     final_position = x; 
+ end
+ 
+ %Storage vessel
+ for x = [final_position:delta_x_pvc:final_position+L_pvc]  
+     a = a + 1;
+     c = c + 1;
+     position(a) = x;
+     final_position = x;
+ end
+
+%Connection 2
+for x = [final_position:delta_x_conn:final_position+L_conn1] 
+    a = a + 1;
+    d = d + 1;
+    position(a) = x;
+    final_position = x;    
+end
 
 Main Loop
 This is the main loop of the model that cycles between the time instances and calculates the temperature of water and copper for each position. To do this one central loop defines the time whilst secondary loops within are used to calcaulte the temperature along the positions.  Different for loops are used for each of the different sections of the tube. 
 %Ensure all matrices used are reset when running this section
 T_water = zeros(a, t_end/dt +1);
 T_copper = zeros(b, t_end/dt +1);
+T_polys = zeros(c, t_end/dt +1);
 T_polyu = zeros(d, t_end/dt +1);
 time = [1, t_end/dt +1];  %Used as time for the figures
-position = [1, a]; %Used as position for the figures
 time(1) = 0; %Set t_0 as 0
      
 for i = [1:1:a]
@@ -306,8 +336,6 @@ for t = [dt:dt:t_end]
             T_wa_in = mean(T_water(i-1:i, j-1));
         end
         
-        position(i) = x; %Used to define position matrix for figures
-        
         T_co_in = T_copper(i,j-1); %Define copper temp input (for function) by taking same position and one previous time frame
         
         
@@ -329,11 +357,9 @@ for t = [dt:dt:t_end]
         
         i = i + 1;
         
-        position(i) = x;
-        
         T_co_in = T_copper(i,j-1);
         
-        T_wa_in = mean(T_water(i-2:i+1, j-1));
+        T_wa_in = mean(T_water(i-1:i+1, j-1));
         
         T_copper(i,j) = T_co_para(T_co_in, dt, e_gl_plate, e_alu_tape, I, w_parabola, w_tube, e_black_co, sigma, T_0, h_in_air, k_copper,delta_x_copper,R_in_copper,R_out_copper, rho_copper, c_copper, T_wa_in);
         
@@ -347,8 +373,6 @@ for t = [dt:dt:t_end]
     for x = [final_position:delta_x_copper:final_position+L_co_bends]
         
         i = i + 1;
-        
-        position(i) = x;
         
         T_co_in = T_copper(i,j-1);
         
@@ -367,8 +391,6 @@ for t = [dt:dt:t_end]
         
         i = i + 1;
         
-        position(i) = x;
-        
         T_co_in = T_copper(i,j-1);
         
         T_wa_in = mean(T_water(i-2:i, j-1));
@@ -385,8 +407,6 @@ for t = [dt:dt:t_end]
     for x = [final_position:delta_x_copper:final_position+L_co_bends]
         
         i = i + 1;
-        
-        position(i) = x;
         
         T_co_in = T_copper(i,j-1);
         
@@ -405,8 +425,6 @@ for t = [dt:dt:t_end]
         
         i = i + 1;
         
-        position(i) = x;
-        
         T_co_in = T_copper(i,j-1);
         
         T_wa_in = mean(T_water(i-2:i, j-1));
@@ -423,8 +441,6 @@ for t = [dt:dt:t_end]
     for x = [final_position:delta_x_copper:final_position+L_co_bends]
         
         i = i + 1;
-        
-        position(i) = x;
         
         T_co_in = T_copper(i,j-1);
         
@@ -443,8 +459,6 @@ for t = [dt:dt:t_end]
         
         i = i + 1;
         
-        position(i) = x;
-        
         T_co_in = T_copper(i,j-1);
         
         T_wa_in = mean(T_water(i-2:i, j-1));
@@ -462,8 +476,6 @@ for t = [dt:dt:t_end]
      for x = [final_position:delta_x_copper:final_position+L_inoutlet]
         
         i = i + 1;
-        
-        position(i) = x;
         
         T_co_in = T_copper(i,j-1);
         
@@ -485,8 +497,6 @@ for t = [dt:dt:t_end]
          
          l = l + 1;
          
-         position(i) = x;
-         
          T_po_in = T_polyu(l,j-1);
          
          T_wa_in = mean(T_water(i-2:i, j-1));
@@ -506,8 +516,6 @@ for t = [dt:dt:t_end]
          i = i + 1;
          
          s = s + 1;
-         
-         position(i) = x;
          
          T_polys_in = T_polys(s,j-1);
          
@@ -529,8 +537,6 @@ for t = [dt:dt:t_end]
          i = i + 1;
          
          l = l + 1;
-         
-         position(i) = x;
          
          T_po_in = T_polyu(l,j-1);
          
